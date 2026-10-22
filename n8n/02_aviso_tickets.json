@@ -1,0 +1,174 @@
+{
+  "name": "DuocAIAgent - Aviso de tickets a coordinación",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "e542c92b-ac50-4974-b03c-90d16e7aed13",
+      "name": "Cada 5 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:8000/tickets/por-notificar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "cambiar-por-tu-api-key"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "48ead793-5196-4da3-bab9-80f77f41746c",
+      "name": "Tickets por notificar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "ad93e87c-2c89-4fe6-8802-c248f0ba33aa",
+              "leftValue": "={{ $json.numero }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "13762c48-a71f-45cf-b5ea-9693a81ee6c5",
+      "name": "Solo tickets válidos",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "agente@duocuc.cl",
+        "toEmail": "coordinacion.practicas@duocuc.cl",
+        "subject": "=Ticket #{{ $json.numero }} - {{ $json.motivo }}",
+        "emailFormat": "text",
+        "text": "=Nuevo ticket derivado por DuocAIAgent\n\nTicket: #{{ $json.numero }}\nEstudiante: {{ $json.user_id }}\nMotivo: {{ $json.motivo }}\nPrioridad: {{ $json.prioridad }}\nCreado: {{ $json.creado_en }}\n\nResumen:\n{{ $json.resumen }}",
+        "options": {}
+      },
+      "id": "c2978793-06c3-422f-bcc2-7fd11da4a0a4",
+      "name": "Enviar correo",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:8000/tickets/{{ $('Tickets por notificar').item.json.numero }}/notificado",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "cambiar-por-tu-api-key"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b9c35dcd-6147-49d2-aded-f5f4936477b8",
+      "name": "Marcar notificado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Cada 5 minutos": {
+      "main": [
+        [
+          {
+            "node": "Tickets por notificar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tickets por notificar": {
+      "main": [
+        [
+          {
+            "node": "Solo tickets válidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Solo tickets válidos": {
+      "main": [
+        [
+          {
+            "node": "Enviar correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar correo": {
+      "main": [
+        [
+          {
+            "node": "Marcar notificado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

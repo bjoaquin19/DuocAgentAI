@@ -1,0 +1,10 @@
+# Fuentes EXTERNAS (paginas web) que se agregan a la base de conocimiento.
+# Una URL por linea. Las lineas con # se ignoran.
+# Si una pagina no responde, la ingesta muestra un warning y sigue con las demas.
+
+# Feriados legales en Chile (sirve para preguntas tipo "hay clases el 18 de septiembre?")
+https://es.wikipedia.org/wiki/Anexo:D%C3%ADas_feriados_en_Chile
+
+# Paginas publicas de Duoc UC
+https://www.duoc.cl/
+https://www.duoc.cl/vida-estudiantil/

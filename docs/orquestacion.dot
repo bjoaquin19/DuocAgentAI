@@ -1,0 +1,60 @@
+digraph G {
+  rankdir=TB; fontname="DejaVu Sans"; fontsize=11;
+  node [fontname="DejaVu Sans", fontsize=10, shape=box, style="rounded,filled", fillcolor="#eef2ff", color="#4f46e5"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#475569"];
+
+  usuario [label="Estudiante\n(Streamlit / consola / notebook\no n8n vía API REST)", shape=oval, fillcolor="#fef3c7", color="#b45309"];
+  inicio [label="inicio\ncarga perfil + memorias relevantes\n(recuperación semántica)"];
+  planificador [label="planificador\nclasifica tipo de tarea, reescribe la consulta\ny arma plan con prioridades"];
+  directo [label="responder_directo\nsaludo / fuera de alcance"];
+  agente [label="agente (ReAct + function calling)\nejecuta el plan con gpt-oss-20b"];
+  aprobacion [label="aprobacion\nhuman-in-the-loop (interrupt)", fillcolor="#fee2e2", color="#b91c1c"];
+  herramientas [label="herramientas (ToolNode)", fillcolor="#dcfce7", color="#15803d"];
+  revisar [label="revisar\nevalúa observaciones\n¿cambió el perfil?"];
+  validador [label="validador\n¿respuesta respaldada por la evidencia?\n(1 reintento)"];
+  memoria [label="memoria\nextrae hechos nuevos, resume historial,\nguarda traza"];
+  fin [label="Respuesta", shape=oval, fillcolor="#fef3c7", color="#b45309"];
+
+  subgraph cluster_tools {
+    label="Herramientas"; style="rounded,dashed"; color="#15803d"; fontsize=10;
+    node [fillcolor="#f0fdf4", color="#15803d", fontsize=9];
+    t1 [label="CONSULTA\nbuscar_documentos\nconsultar_calendario\nproximos_eventos\nconsultar_perfil\nconsultar_planes_previos"];
+    t2 [label="RAZONAMIENTO\ncalcular_dias\nverificar_etapa_practica"];
+    t3 [label="ESCRITURA\nactualizar_perfil\nguardar_plan_inicio*\ncrear_ticket_derivacion*\n(* requiere aprobación)"];
+  }
+
+  subgraph cluster_db {
+    label="MongoDB Atlas"; style="rounded,dashed"; color="#0f766e"; fontsize=10;
+    node [shape=cylinder, fillcolor="#ccfbf1", color="#0f766e", fontsize=9];
+    d1 [label="documentos\n(vector index)"];
+    d2 [label="memorias\n(vector index)"];
+    d3 [label="perfiles · planes\ntickets · trazas"];
+    d4 [label="checkpoints\n(memoria corto plazo)"];
+  }
+
+  usuario -> inicio -> planificador;
+  planificador -> directo [label="saludo / fuera"];
+  planificador -> agente [label="consulta / multi-etapa"];
+  agente -> herramientas [label="tool_calls"];
+  agente -> aprobacion [label="tool de escritura crítica"];
+  aprobacion -> herramientas [label="aprobado"];
+  aprobacion -> agente [label="rechazado"];
+  herramientas -> revisar;
+  revisar -> agente [label="sigue el plan"];
+  revisar -> planificador [label="perfil cambió\n(re-planificar)", color="#b91c1c", fontcolor="#b91c1c"];
+  agente -> validador [label="respuesta con evidencia"];
+  agente -> memoria [label="respuesta sin evidencia"];
+  validador -> agente [label="rechazada\n(reintento)", color="#b91c1c", fontcolor="#b91c1c"];
+  validador -> memoria [label="ok / respuesta segura"];
+  directo -> memoria;
+  memoria -> fin;
+  n8n [label="n8n (cada 5 min)\nlee tickets nuevos y\navisa a coordinación por correo", shape=oval, fillcolor="#ffedd5", color="#c2410c", fontsize=9];
+  d3 -> n8n [style=dashed, color="#c2410c", label="API /tickets"];
+
+  herramientas -> t1 [style=dotted, arrowhead=none];
+  herramientas -> t2 [style=dotted, arrowhead=none];
+  herramientas -> t3 [style=dotted, arrowhead=none];
+  t1 -> d1 [style=dotted]; t3 -> d3 [style=dotted];
+  inicio -> d2 [style=dotted]; memoria -> d2 [style=dotted];
+  agente -> d4 [style=dotted, label="checkpointer"];
+}

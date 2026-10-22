@@ -1,0 +1,239 @@
+{
+  "name": "DuocAIAgent - Consultas por webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "duocaiagent/preguntar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "35b51f4b-88fa-4e46-af34-acd1f32168f8",
+      "name": "Webhook consulta",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "10eec638-972b-47e0-9d54-07395a452c0d"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/preguntar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "cambiar-por-tu-api-key"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ usuario: $json.body.usuario, mensaje: $json.body.mensaje, conversacion: $json.body.conversacion || null }) }}"
+      },
+      "id": "115e9988-c327-4b08-bfd4-aa59ff88173d",
+      "name": "Preguntar al agente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cc9ee683-7ad6-42c3-b5f0-8db8e87aa158",
+              "leftValue": "={{ $json.pendiente_aprobacion }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2134615b-549b-437d-a589-d22a9b70781d",
+      "name": "¿Requiere aprobación?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ estado: 'pendiente_aprobacion', conversacion: $json.conversacion, mensaje: $json.respuesta, siguiente_paso: 'POST /webhook/duocaiagent/aprobar con conversacion y aprobado' }) }}",
+        "options": {}
+      },
+      "id": "96ea1606-717e-4a5c-a26c-458153b0688c",
+      "name": "Responder pendiente",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ estado: 'ok', conversacion: $json.conversacion, respuesta: $json.respuesta, tipo: $json.tipo, fuentes: $json.fuentes }) }}",
+        "options": {}
+      },
+      "id": "a9d32de9-8d65-4ead-a777-65aee1201da9",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "duocaiagent/aprobar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "4c6d0d05-c5b5-4c21-89ae-309ad44d665e",
+      "name": "Webhook aprobación",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "7bfcdce7-4e11-42aa-8a1f-a059680e800e"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/aprobar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "cambiar-por-tu-api-key"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ conversacion: $json.body.conversacion, aprobado: $json.body.aprobado === true }) }}"
+      },
+      "id": "55204f22-8b2f-4833-b730-ba4dd66519c5",
+      "name": "Enviar decisión",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ estado: 'ok', conversacion: $json.conversacion, respuesta: $json.respuesta, herramientas: $json.herramientas }) }}",
+        "options": {}
+      },
+      "id": "889de05f-e105-41f0-9acd-c7db9de0f7cc",
+      "name": "Responder decisión",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook consulta": {
+      "main": [
+        [
+          {
+            "node": "Preguntar al agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preguntar al agente": {
+      "main": [
+        [
+          {
+            "node": "¿Requiere aprobación?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Requiere aprobación?": {
+      "main": [
+        [
+          {
+            "node": "Responder pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook aprobación": {
+      "main": [
+        [
+          {
+            "node": "Enviar decisión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar decisión": {
+      "main": [
+        [
+          {
+            "node": "Responder decisión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
