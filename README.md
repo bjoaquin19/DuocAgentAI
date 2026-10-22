@@ -12,6 +12,9 @@ El agente está hecho con LangGraph y usa un modelo de Groq (gpt-oss-20b). Busca
 
 ## Instrucciones
 
+### Documentos de Duoc
+Los documentos que usaremos para que nuestro modelo tenga el contexto se encuentran en formato markdown `.md` dentro de la carpeta `docs`
+
 ### Clonar el proyecto
 
 ```
@@ -33,6 +36,8 @@ pip install -r requirements.txt
 
 ### Cargar los documentos
 
+
+
 ```
 python ingesta.py --sin-externas
 ```
@@ -46,3 +51,6 @@ streamlit run app.py
 ```
 
 En esta abres el localhost y seguido interactuas con el proyecto.
+
+### Informe y presentación
+Los documentos de los cuales se alimenta nuestro modelo se encuentran en la carpeta `docs`
